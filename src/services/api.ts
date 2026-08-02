@@ -8,7 +8,7 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://made-over-tiramisu-backend.vercel.app/';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://made-over-tiramisu-backend.vercel.app/api';
 
 // Create axios instance
 export const apiClient: AxiosInstance = axios.create({
