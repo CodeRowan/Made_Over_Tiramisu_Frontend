@@ -7,8 +7,9 @@
  */
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import { toast } from '../app/components/ui/CommonToaster';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://made-over-tiramisu-backend.vercel.app/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // Create axios instance
 export const apiClient: AxiosInstance = axios.create({
@@ -40,11 +41,16 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    // If unauthorized, redirect to login
+    // If unauthorized, notify user and redirect to login
     if (error.response?.status === 401) {
+      const isLoginPage = window.location.pathname.includes('/admin/login');
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminUser');
-      window.location.href = '/admin/login';
+      
+      if (!isLoginPage) {
+        toast.authError('Session Expired', 'Your session has expired. Please log in again.');
+        window.location.href = '/admin/login';
+      }
     }
 
     return Promise.reject(error);

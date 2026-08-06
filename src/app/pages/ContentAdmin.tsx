@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '../components/ui/CommonToaster';
 import { contentAPI } from '../../services/api';
 import { CONTENT_FIELD_LIMITS } from '../../constants/fieldLimits';
 import { LimitedField } from '../components/admin/LimitedField';
 import { ImageUploadField } from '../components/admin/ImageUploadField';
 import { MultiImageUploadField } from '../components/admin/MultiImageUploadField';
+import { VideoUploadField } from '../components/admin/VideoUploadField';
 import { SkeletonBlock } from '../components/admin/Skeleton';
 import { useRealtimeUpdates } from '../../hooks/useAdminSocket';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -50,8 +51,9 @@ const SECTION_FIELDS: Record<string, { key: string; label: string }[]> = {
   video: [
     { key: 'title', label: 'Title' },
     { key: 'description', label: 'Description' },
-    { key: 'videoId', label: 'YouTube video ID' },
-    { key: 'image', label: 'Thumbnail image URL' },
+    { key: 'videoUrl', label: 'Uploaded Video File (Cloudinary video)' },
+    // { key: 'videoId', label: 'YouTube Video ID (Optional fallback)' },
+    { key: 'image', label: 'Thumbnail Image URL (Auto-generated or custom)' },
   ],
   testimonials: [
     { key: 'title', label: 'Heading' },
@@ -127,9 +129,12 @@ export function ContentAdmin() {
   const paneRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     loadContent(selectedSection);
     setPreviewReady(false);
+    setErrors({});
   }, [selectedSection]);
 
   // Fit the fixed-size device frame into whatever width the preview pane has
@@ -184,6 +189,7 @@ export function ContentAdmin() {
       const data = response.data.content || {};
       setContent(data);
       setOriginalContent(data);
+      setErrors({});
     } catch (error) {
       toast.error('Failed to load content');
     } finally {
@@ -193,7 +199,30 @@ export function ContentAdmin() {
 
   const handleFieldChange = (key: string, value: any) => {
     setContent({ ...content, [key]: value });
+    if (errors[key]) {
+      setErrors((prev) => ({ ...prev, [key]: undefined }));
+    }
     setStatus('Editing content');
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    const fields = SECTION_FIELDS[selectedSection] || [];
+
+    fields.forEach(({ key, label }) => {
+      const val = content[key];
+      // Title / Heading required validation
+      if ((key === 'title' || key === 'heading') && selectedSection !== 'general' && typeof val === 'string' && !val.trim()) {
+        newErrors[key] = `${label} cannot be blank`;
+      }
+      // Email validation
+      if (key === 'email' && typeof val === 'string' && val.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())) {
+        newErrors[key] = 'Please enter a valid email address';
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // The actual network save — only ever called after the admin confirms
@@ -238,6 +267,10 @@ export function ContentAdmin() {
   // Opens the confirmation dialog instead of saving immediately — this is
   // what this page's own Save button triggers.
   const requestSave = async () => {
+    if (!validateForm()) {
+      toast.error('Please fix the highlighted errors before saving');
+      return;
+    }
     if (changedFields.length === 0) {
       // Draft was typed then manually reverted back to the saved value —
       // nothing to publish, so just clear the status instead of silently
@@ -354,7 +387,7 @@ export function ContentAdmin() {
               return (
                 <div key={key}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "7px" }}>
-                    <span style={{ fontSize: "13px", fontFamily: "var(--font-heading)", fontWeight: "800" }}>
+                    <span style={{ fontSize: "13px", fontFamily: "var(--font-heading)", fontWeight: "800", color: errors[key] ? "#EF4444" : "inherit" }}>
                       {label}
                     </span>
                   </div>
@@ -362,6 +395,19 @@ export function ContentAdmin() {
                     <ImageUploadField
                       value={content[key] || ''}
                       onChange={(url) => handleFieldChange(key, url)}
+                      error={errors[key]}
+                    />
+                  ) : key === 'videoUrl' ? (
+                    <VideoUploadField
+                      value={content[key] || ''}
+                      onChange={(videoUrl, thumbnailUrl) => {
+                        handleFieldChange('videoUrl', videoUrl);
+                        if (thumbnailUrl && (!content.image || content.image.includes('tiraminsu_home_page_bg_image'))) {
+                          handleFieldChange('image', thumbnailUrl);
+                          toast.info('Thumbnail auto-generated from video');
+                        }
+                      }}
+                      error={errors[key]}
                     />
                   ) : key === 'images' ? (
                     <MultiImageUploadField
@@ -376,6 +422,7 @@ export function ContentAdmin() {
                       onChange={(value) => handleFieldChange(key, value)}
                       maxLength={maxLength || 100}
                       multiline={key === 'description'}
+                      error={errors[key]}
                     />
                   )}
                 </div>

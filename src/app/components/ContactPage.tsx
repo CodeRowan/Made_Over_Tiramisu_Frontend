@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { ArrowLeft, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "./ui/CommonToaster";
 import { publicAPI } from "../../services/api";
 import { useContentOverride } from "../../hooks/useContentOverride";
 

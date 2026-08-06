@@ -8,6 +8,7 @@ import { useContentOverride } from "../../hooks/useContentOverride";
 const DEFAULTS = {
   title: "The Art of the Perfect Spoon",
   description: "",
+  videoUrl: "",
   videoId: "dQw4w9WgXcQ",
   image: heroBg,
 };
@@ -31,6 +32,7 @@ export function VideoSection({ previewOverride }: VideoSectionProps = {}) {
         setContent({
           title: c.title || DEFAULTS.title,
           description: c.description || DEFAULTS.description,
+          videoUrl: c.videoUrl || "",
           videoId: c.videoId || DEFAULTS.videoId,
           image: c.image || heroBg,
         });
@@ -86,7 +88,7 @@ export function VideoSection({ previewOverride }: VideoSectionProps = {}) {
           {!playing ? (
             <div className="relative w-full h-full">
               <img
-                src={content.image}
+                src={content.image || heroBg}
                 alt="Tiramisu video thumbnail"
                 className="w-full h-full object-cover"
                 style={{ filter: "brightness(0.5)" }}
@@ -108,6 +110,14 @@ export function VideoSection({ previewOverride }: VideoSectionProps = {}) {
                 </p>
               </div>
             </div>
+          ) : content.videoUrl ? (
+            <video
+              className="w-full h-full object-cover"
+              src={content.videoUrl}
+              poster={content.image || heroBg}
+              controls
+              autoPlay
+            />
           ) : (
             <iframe
               className="w-full h-full"

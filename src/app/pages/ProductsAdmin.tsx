@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useOutletContext } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '../components/ui/CommonToaster';
 import { productsAPI } from '../../services/api';
 import { PRODUCT_LIMITS } from '../../constants/fieldLimits';
 import { LimitedField } from '../components/admin/LimitedField';
@@ -107,9 +107,12 @@ export function ProductsAdmin() {
     }
   };
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const openCreateModal = () => {
     setEditingId(null);
     setForm({ ...EMPTY_FORM });
+    setErrors({});
     setShowModal(true);
   };
 
@@ -123,23 +126,43 @@ export function ProductsAdmin() {
       category: product.category,
       isAvailable: product.isAvailable,
     });
+    setErrors({});
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingId(null);
+    setErrors({});
   };
 
   const handleFormChange = (key: string, value: any) => {
     setForm((f) => ({ ...f, [key]: value }));
+    if (errors[key]) {
+      setErrors((prev) => ({ ...prev, [key]: undefined }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.name.trim()) newErrors.name = 'This field is required';
+    if (!form.price.trim()) {
+      newErrors.price = 'This field is required';
+    } else if (isNaN(Number(form.price)) || Number(form.price) <= 0) {
+      newErrors.price = 'Price must be greater than $0';
+    }
+    if (!form.image.trim()) newErrors.image = 'This field is required';
+    if (!form.description.trim()) newErrors.description = 'This field is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.name.trim() || !form.description.trim() || !form.image.trim() || !form.price) {
-      toast.error('Please fill in name, price, description, and image URL');
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields highlighted in red');
       return;
     }
 
@@ -374,6 +397,7 @@ export function ProductsAdmin() {
             animate={{ opacity: 1, y: 0 }}
             onClick={(e) => e.stopPropagation()}
             onSubmit={handleSubmit}
+            noValidate
             style={{
               background: "#FFFDF8", borderRadius: "14px", padding: "28px",
               width: "min(480px, 92vw)", maxHeight: "88vh", overflow: "auto",
@@ -391,6 +415,7 @@ export function ProductsAdmin() {
                 onChange={(value) => handleFormChange('name', value)}
                 maxLength={PRODUCT_LIMITS.name}
                 placeholder="Classic Tiramisu"
+                error={errors.name}
               />
             </div>
 
@@ -404,9 +429,17 @@ export function ProductsAdmin() {
                   value={form.price}
                   onChange={(e) => handleFormChange('price', e.target.value)}
                   placeholder="14"
-                  style={inputStyle}
-                  required
+                  style={{
+                    ...inputStyle,
+                    border: errors.price ? '1.5px solid #EF4444' : '1.8px solid rgba(44,24,16,.2)',
+                    background: errors.price ? 'rgba(239,68,68,.05)' : 'rgba(245,239,224,.07)',
+                  }}
                 />
+                {errors.price && (
+                  <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px", fontWeight: 500 }}>
+                    {errors.price}
+                  </div>
+                )}
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: "13px", fontWeight: 700, display: "block", marginBottom: "6px" }}>Category</label>
@@ -427,6 +460,7 @@ export function ProductsAdmin() {
               <ImageUploadField
                 value={form.image}
                 onChange={(url) => handleFormChange('image', url)}
+                error={errors.image}
               />
             </div>
 
@@ -438,6 +472,7 @@ export function ProductsAdmin() {
                 maxLength={PRODUCT_LIMITS.description}
                 multiline
                 placeholder="Coffee-soaked savoiardi, velvety mascarpone..."
+                error={errors.description}
               />
             </div>
 

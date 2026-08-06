@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "./components/ui/CommonToaster";
 
 export interface CartItem {
   id: string;
@@ -35,7 +35,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, { ...item, quantity: 1 }];
     });
-    toast.success(`${item.name} added to cart!`, {
+    toast.success(`${item.name} added to cart!`, undefined, {
       style: { background: "#3B1E0A", color: "#F5EFE0", border: "none" },
     });
   }, []);

@@ -1,22 +1,20 @@
 import { useRef, useState } from "react";
 import { toast } from "../ui/CommonToaster";
 import { uploadAPI } from "../../../services/api";
-import { MAX_IMAGE_SIZE_MB, ALLOWED_IMAGE_TYPES } from "../../../constants/fieldLimits";
+import { MAX_VIDEO_SIZE_MB, ALLOWED_VIDEO_TYPES } from "../../../constants/fieldLimits";
 
-interface ImageUploadFieldProps {
+interface VideoUploadFieldProps {
   value: string;
-  onChange: (url: string) => void;
-  previewHeight?: number;
+  onChange: (videoUrl: string, thumbnailUrl?: string) => void;
   error?: string;
 }
 
 /**
- * Image field for admin forms: paste a URL directly, or upload a file from
- * the device — which uploads to Cloudinary via the backend and stores the
- * returned URL. Validates type/size client-side before ever hitting the
- * network, matching the backend's actual multer limits.
+ * Video field for admin forms: paste a video URL directly, or upload a video file
+ * from the device — which uploads to Cloudinary via the backend and returns
+ * the Cloudinary video URL along with an auto-generated thumbnail URL.
  */
-export function ImageUploadField({ value, onChange, previewHeight = 160, error }: ImageUploadFieldProps) {
+export function VideoUploadField({ value, onChange, error }: VideoUploadFieldProps) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,13 +22,13 @@ export function ImageUploadField({ value, onChange, previewHeight = 160, error }
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      toast.error("Please choose a JPEG, PNG, WEBP or GIF image");
+    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+      toast.error("Please choose a supported video format (MP4, WebM, MOV, OGG)");
       e.target.value = "";
       return;
     }
-    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-      toast.error(`Image must be ${MAX_IMAGE_SIZE_MB}MB or smaller`);
+    if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
+      toast.error(`Video must be ${MAX_VIDEO_SIZE_MB}MB or smaller`);
       e.target.value = "";
       return;
     }
@@ -40,10 +38,12 @@ export function ImageUploadField({ value, onChange, previewHeight = 160, error }
       const formData = new FormData();
       formData.append("file", file);
       const response = await uploadAPI.uploadImage(formData);
-      onChange(response.data.imageUrl);
-      toast.success("Image uploaded");
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Upload failed");
+      const videoUrl = response.data.videoUrl || response.data.imageUrl;
+      const thumbnailUrl = response.data.thumbnailUrl;
+      onChange(videoUrl, thumbnailUrl);
+      toast.success("Video uploaded to Cloudinary successfully!");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Video upload failed");
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -53,8 +53,8 @@ export function ImageUploadField({ value, onChange, previewHeight = 160, error }
   return (
     <div>
       {value && (
-        <div style={{ marginBottom: "8px", borderRadius: "8px", overflow: "hidden", background: "#EDE3D2", height: previewHeight }}>
-          <img src={value} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ marginBottom: "8px", borderRadius: "8px", overflow: "hidden", background: "#000", maxHeight: "200px" }}>
+          <video src={value} controls style={{ width: "100%", maxHeight: "200px", objectFit: "contain" }} />
         </div>
       )}
 
@@ -62,7 +62,7 @@ export function ImageUploadField({ value, onChange, previewHeight = 160, error }
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Paste an image URL…"
+          placeholder="Paste a video URL or upload from device..."
           style={{
             flex: 1,
             height: "40px",
@@ -93,18 +93,18 @@ export function ImageUploadField({ value, onChange, previewHeight = 160, error }
             whiteSpace: "nowrap",
           }}
         >
-          {uploading ? "Uploading…" : "Upload from device"}
+          {uploading ? "Uploading video..." : "Upload video from device"}
         </button>
         <input
           ref={fileInputRef}
           type="file"
-          accept={ALLOWED_IMAGE_TYPES.join(",")}
+          accept={ALLOWED_VIDEO_TYPES.join(",")}
           onChange={handleFileSelect}
           style={{ display: "none" }}
         />
       </div>
       <div style={{ fontSize: "11px", color: error ? "#EF4444" : "#9d8371", marginTop: "5px", fontWeight: error ? 600 : 400 }}>
-        {error ? error : `JPEG, PNG, WEBP or GIF · up to ${MAX_IMAGE_SIZE_MB}MB`}
+        {error ? error : `MP4, WebM, MOV, OGG · up to ${MAX_VIDEO_SIZE_MB}MB (Saved to Cloudinary)`}
       </div>
     </div>
   );

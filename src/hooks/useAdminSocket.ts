@@ -2,8 +2,9 @@ import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 
 // Backend base URL without the trailing "/api" — Socket.IO connects at the
-// server root, not under the REST API path.
-const SOCKET_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/api\/?$/, "");
+// server root, not under the REST API path. Default port matches the API
+// client (5001) so realtime events actually connect in local dev.
+const SOCKET_URL = (import.meta.env.VITE_API_URL || "http://localhost:5001/api").replace(/\/api\/?$/, "");
 
 // One shared connection for the whole admin session — every page that
 // subscribes reuses it instead of opening a new socket per tab/page.

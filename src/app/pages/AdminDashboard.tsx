@@ -54,7 +54,14 @@ export function AdminDashboard() {
 
   useEffect(() => {
     const userData = localStorage.getItem('adminUser');
-    if (userData) setUser(JSON.parse(userData));
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch {
+        // Corrupted/partial user object — drop it rather than crash the dashboard
+        localStorage.removeItem('adminUser');
+      }
+    }
     loadDashboard();
   }, []);
 

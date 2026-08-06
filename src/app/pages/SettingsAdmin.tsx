@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { toast } from '../components/ui/CommonToaster';
 import { authAPI } from '../../services/api';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
@@ -34,16 +34,36 @@ export function SettingsAdmin() {
     }
   };
 
+  const [errors, setErrors] = useState<{ currentPassword?: string; newPassword?: string; confirmPassword?: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { currentPassword?: string; newPassword?: string; confirmPassword?: string } = {};
+
+    if (!currentPassword) {
+      newErrors.currentPassword = 'This field is required';
+    }
+
+    if (!newPassword) {
+      newErrors.newPassword = 'This field is required';
+    } else if (newPassword.length < 8) {
+      newErrors.newPassword = 'Password must be at least 8 characters';
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'This field is required';
+    } else if (newPassword && confirmPassword !== newPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (newPassword !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters');
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields highlighted in red');
       return;
     }
 
@@ -54,6 +74,7 @@ export function SettingsAdmin() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setErrors({});
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to change password');
     } finally {
@@ -94,71 +115,95 @@ export function SettingsAdmin() {
           <div style={{ fontFamily: "var(--font-heading)", fontWeight: "800", fontSize: "19px", marginBottom: "18px" }}>
             Change your password
           </div>
-          <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <form onSubmit={handleChangePassword} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {/* Current Password */}
             <div>
-              <div style={{ fontSize: "13px", color: "#7a5c48", marginBottom: "6px" }}>Current password</div>
+              <div style={{ fontSize: "13px", color: errors.currentPassword ? "#EF4444" : "#7a5c48", marginBottom: "6px" }}>Current password</div>
               <input
                 type={showPassword ? "text" : "password"}
                 value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  if (errors.currentPassword) setErrors((prev) => ({ ...prev, currentPassword: undefined }));
+                }}
                 style={{
                   width: "100%",
                   height: "44px",
                   padding: "0 12px",
                   fontSize: "14px",
-                  background: "rgba(245,239,224,.07)",
-                  border: "1px solid rgba(44,24,16,.16)",
+                  background: errors.currentPassword ? "rgba(239,68,68,.05)" : "rgba(245,239,224,.07)",
+                  border: errors.currentPassword ? "1.5px solid #EF4444" : "1px solid rgba(44,24,16,.16)",
                   borderRadius: "8px",
                   boxSizing: "border-box",
                   color: "#2C1810",
+                  outline: "none",
                 }}
-                required
               />
+              {errors.currentPassword && (
+                <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px", fontWeight: 500 }}>
+                  {errors.currentPassword}
+                </div>
+              )}
             </div>
 
             {/* New Password */}
             <div>
-              <div style={{ fontSize: "13px", color: "#7a5c48", marginBottom: "6px" }}>New password</div>
+              <div style={{ fontSize: "13px", color: errors.newPassword ? "#EF4444" : "#7a5c48", marginBottom: "6px" }}>New password</div>
               <input
                 type={showPassword ? "text" : "password"}
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  if (errors.newPassword) setErrors((prev) => ({ ...prev, newPassword: undefined }));
+                }}
                 style={{
                   width: "100%",
                   height: "44px",
                   padding: "0 12px",
                   fontSize: "14px",
-                  background: "rgba(245,239,224,.07)",
-                  border: "1px solid rgba(44,24,16,.16)",
+                  background: errors.newPassword ? "rgba(239,68,68,.05)" : "rgba(245,239,224,.07)",
+                  border: errors.newPassword ? "1.5px solid #EF4444" : "1px solid rgba(44,24,16,.16)",
                   borderRadius: "8px",
                   boxSizing: "border-box",
                   color: "#2C1810",
+                  outline: "none",
                 }}
-                required
               />
+              {errors.newPassword && (
+                <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px", fontWeight: 500 }}>
+                  {errors.newPassword}
+                </div>
+              )}
             </div>
 
             {/* Confirm Password */}
             <div>
-              <div style={{ fontSize: "13px", color: "#7a5c48", marginBottom: "6px" }}>Type it once more</div>
+              <div style={{ fontSize: "13px", color: errors.confirmPassword ? "#EF4444" : "#7a5c48", marginBottom: "6px" }}>Type it once more</div>
               <input
                 type={showPassword ? "text" : "password"}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                }}
                 style={{
                   width: "100%",
                   height: "44px",
                   padding: "0 12px",
                   fontSize: "14px",
-                  background: "rgba(245,239,224,.07)",
-                  border: "1px solid rgba(44,24,16,.16)",
+                  background: errors.confirmPassword ? "rgba(239,68,68,.05)" : "rgba(245,239,224,.07)",
+                  border: errors.confirmPassword ? "1.5px solid #EF4444" : "1px solid rgba(44,24,16,.16)",
                   borderRadius: "8px",
                   boxSizing: "border-box",
                   color: "#2C1810",
+                  outline: "none",
                 }}
-                required
               />
+              {errors.confirmPassword && (
+                <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px", fontWeight: 500 }}>
+                  {errors.confirmPassword}
+                </div>
+              )}
             </div>
 
             {/* Show/Hide */}

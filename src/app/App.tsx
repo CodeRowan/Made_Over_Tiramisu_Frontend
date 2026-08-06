@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Toaster } from "sonner";
+import { CommonToaster, toast } from "./components/ui/CommonToaster";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
@@ -32,6 +32,14 @@ import { PreviewFrame } from "./pages/PreviewFrame";
 
 type Page = "home" | "about" | "contact" | "findus";
 
+// These aren't real pages — they're scroll targets on the home page. The
+// header/footer link to them as convenient shortcuts (Order Now → menu, etc.).
+const SCROLL_TARGETS: Record<string, string> = {
+  findus: "find-us",
+  products: "products-anchor",
+  cart: "products-anchor",
+};
+
 function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   return (
     <div>
@@ -52,27 +60,45 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
  * Protected Route Component
  * Checks if admin is logged in before allowing access
  *
- * DEVELOPMENT MODE: Set BYPASS_AUTH to true to skip login
+ * LOCAL DEVELOPMENT ONLY: Set BYPASS_AUTH to true to skip login.
+ * Must be false in production — leaving it true opens the whole admin
+ * panel to anyone who visits /admin/*.
  */
-const BYPASS_AUTH = true; // Set to false to require login
+const BYPASS_AUTH = false; // Set to true to skip login during local development
 
 function ProtectedAdminRoute({ children }: { children: JSX.Element }) {
-  if (BYPASS_AUTH) {
-    return children; // Skip authentication check
-  }
+  const [authed] = useState(() => (BYPASS_AUTH ? true : !!localStorage.getItem("adminToken")));
 
-  const token = localStorage.getItem("adminToken");
-  return token ? children : <Navigate to="/admin/login" />;
+  // Fire the access-denied toast as a side effect, never during render.
+  useEffect(() => {
+    if (!authed) {
+      toast.authError("Access Denied", "Please log in to access the admin portal.");
+    }
+  }, [authed]);
+
+  if (authed) return children;
+  return <Navigate to="/admin/login" replace />;
 }
 
 function LandingPageApp() {
   const [page, setPage] = useState<Page>("home");
   const [animKey, setAnimKey] = useState(0);
+  // Pending section to scroll to once it has mounted on the home page — set
+  // by "findus" / "products" / "cart" navigation, cleared when reached or
+  // when the user navigates somewhere else.
+  const [scrollTarget, setScrollTarget] = useState<string | null>(null);
 
   const navigate = useCallback((p: string) => {
-    setPage(p as Page);
+    const target = SCROLL_TARGETS[p];
+    if (target) {
+      setPage("home");
+      setScrollTarget(target);
+    } else {
+      setPage(p as Page);
+      setScrollTarget(null); // cancel any in-flight section scroll
+      setAnimKey((k) => k + 1);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
-    setAnimKey((k) => k + 1);
   }, []);
 
   useEffect(() => {
@@ -81,19 +107,31 @@ function LandingPageApp() {
     }
   }, [page]);
 
+  // Retry scrolling to the pending section target until it mounts (sections
+  // load their data asynchronously). Keyed on scrollTarget, not page, so the
+  // home-page remount can't tear the timer down before it fires. Offset by
+  // ~80px so the section isn't hidden under the fixed header.
   useEffect(() => {
-    if (page === "findus") {
-      setPage("home");
-      setTimeout(() => {
-        document.getElementById("find-us")?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    }
-  }, [page]);
+    if (!scrollTarget) return;
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      const el = document.getElementById(scrollTarget);
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top, behavior: "smooth" });
+        window.clearInterval(timer);
+        setScrollTarget(null);
+      } else if (++attempts >= 20) {
+        window.clearInterval(timer);
+        setScrollTarget(null);
+      }
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [scrollTarget]);
 
 
   return (
     <div style={{ fontFamily: "'Lato', sans-serif", background: "#F5EFE0", minHeight: "100vh" }}>
-      <Toaster position="top-right" />
       <Header onNavigate={navigate} currentPage={page} />
 
       <AnimatePresence mode="wait">
@@ -120,6 +158,7 @@ function LandingPageApp() {
 export default function App() {
   return (
     <Router>
+      <CommonToaster position="top-right" />
       <Routes>
         {/* Landing Page Routes */}
         <Route path="/" element={<LandingPageApp />} />

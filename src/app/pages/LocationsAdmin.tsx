@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useOutletContext } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '../components/ui/CommonToaster';
 import { locationsAPI } from '../../services/api';
 import { LOCATION_LIMITS } from '../../constants/fieldLimits';
 import { LimitedField } from '../components/admin/LimitedField';
@@ -67,9 +67,12 @@ export function LocationsAdmin() {
 
   useRealtimeUpdates(['locations:changed'], load);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const openCreate = () => {
     setEditingId(null);
     setForm({ ...EMPTY_FORM });
+    setErrors({});
     setShowModal(true);
   };
 
@@ -80,7 +83,30 @@ export function LocationsAdmin() {
       hours: l.hours || '', mapEmbedUrl: l.mapEmbedUrl || '', orderLink: l.orderLink || '',
       order: l.order, isActive: l.isActive,
     });
+    setErrors({});
     setShowModal(true);
+  };
+
+  const handleFieldChange = (key: string, value: any) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) {
+      setErrors((prev) => ({ ...prev, [key]: undefined }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.name.trim()) newErrors.name = 'This field is required';
+    if (!form.address.trim()) newErrors.address = 'This field is required';
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    if (form.orderLink.trim() && !/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/.*)?$/i.test(form.orderLink.trim())) {
+      newErrors.orderLink = 'Please enter a valid order URL (e.g. https://...)';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const confirmDelete = async () => {
@@ -109,8 +135,8 @@ export function LocationsAdmin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.address.trim()) {
-      toast.error('Please fill in name and address');
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields highlighted in red');
       return;
     }
 
@@ -191,41 +217,57 @@ export function LocationsAdmin() {
             animate={{ opacity: 1, y: 0 }}
             onClick={(e) => e.stopPropagation()}
             onSubmit={handleSubmit}
+            noValidate
             style={{ background: '#FFFDF8', borderRadius: '14px', padding: '28px', width: 'min(480px, 92vw)', maxHeight: '88vh', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}
           >
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '20px' }}>{editingId ? 'Edit location' : 'Add location'}</div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Location name</label>
-              <LimitedField value={form.name} onChange={(value) => setForm({ ...form, name: value })} maxLength={LOCATION_LIMITS.name} placeholder="Hope Island" />
+              <LimitedField value={form.name} onChange={(value) => handleFieldChange('name', value)} maxLength={LOCATION_LIMITS.name} placeholder="Hope Island" error={errors.name} />
             </div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Address</label>
-              <LimitedField value={form.address} onChange={(value) => setForm({ ...form, address: value })} maxLength={LOCATION_LIMITS.address} placeholder="Mariners Cove, Hope Island QLD 4212" />
+              <LimitedField value={form.address} onChange={(value) => handleFieldChange('address', value)} maxLength={LOCATION_LIMITS.address} placeholder="Mariners Cove, Hope Island QLD 4212" error={errors.address} />
             </div>
             <div style={{ display: 'flex', gap: '12px' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Phone</label>
-                <LimitedField value={form.phone} onChange={(value) => setForm({ ...form, phone: value })} maxLength={LOCATION_LIMITS.phone} placeholder="+61 400 000 001" />
+                <LimitedField value={form.phone} onChange={(value) => handleFieldChange('phone', value)} maxLength={LOCATION_LIMITS.phone} placeholder="+61 400 000 001" />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Hours</label>
-                <LimitedField value={form.hours} onChange={(value) => setForm({ ...form, hours: value })} maxLength={LOCATION_LIMITS.hours} placeholder="Tue–Sun: 10am–6pm" />
+                <LimitedField value={form.hours} onChange={(value) => handleFieldChange('hours', value)} maxLength={LOCATION_LIMITS.hours} placeholder="Tue–Sun: 10am–6pm" />
               </div>
             </div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Email</label>
-              <LimitedField value={form.email} onChange={(value) => setForm({ ...form, email: value })} maxLength={LOCATION_LIMITS.email} placeholder="hello@madovertiramisu.com.au" />
+              <LimitedField value={form.email} onChange={(value) => handleFieldChange('email', value)} maxLength={LOCATION_LIMITS.email} placeholder="hello@madovertiramisu.com.au" error={errors.email} />
             </div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Google Maps embed URL</label>
-              <input value={form.mapEmbedUrl} onChange={(e) => setForm({ ...form, mapEmbedUrl: e.target.value })} placeholder="https://www.google.com/maps/embed?pb=..." style={inputStyle} />
+              <input value={form.mapEmbedUrl} onChange={(e) => handleFieldChange('mapEmbedUrl', e.target.value)} placeholder="https://www.google.com/maps/embed?pb=..." style={inputStyle} />
             </div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Order link</label>
-              <input value={form.orderLink} onChange={(e) => setForm({ ...form, orderLink: e.target.value })} placeholder="https://... (UberEats, DoorDash, a form, WhatsApp — any link)" style={inputStyle} />
-              <div style={{ fontSize: '11px', color: '#9d8371', marginTop: '5px' }}>
-                Where "Order Now" sends customers for this location. Leave blank to show "Coming Soon" instead.
-              </div>
+              <input
+                value={form.orderLink}
+                onChange={(e) => handleFieldChange('orderLink', e.target.value)}
+                placeholder="https://... (UberEats, DoorDash, a form, WhatsApp — any link)"
+                style={{
+                  ...inputStyle,
+                  border: errors.orderLink ? '1.5px solid #EF4444' : '1.8px solid rgba(44,24,16,.2)',
+                  background: errors.orderLink ? 'rgba(239,68,68,.05)' : 'rgba(245,239,224,.07)',
+                }}
+              />
+              {errors.orderLink ? (
+                <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px", fontWeight: 500 }}>
+                  {errors.orderLink}
+                </div>
+              ) : (
+                <div style={{ fontSize: '11px', color: '#9d8371', marginTop: '5px' }}>
+                  Where "Order Now" sends customers for this location. Leave blank to show "Coming Soon" instead.
+                </div>
+              )}
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
               <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />

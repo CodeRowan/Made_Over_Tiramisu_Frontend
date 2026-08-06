@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useOutletContext } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '../components/ui/CommonToaster';
 import { contactAPI } from '../../services/api';
 import { SkeletonRow } from '../components/admin/Skeleton';
 import { ConfirmDialog } from '../components/admin/ConfirmDialog';

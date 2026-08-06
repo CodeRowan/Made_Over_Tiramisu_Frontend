@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useOutletContext } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '../components/ui/CommonToaster';
 import { instagramAPI } from '../../services/api';
 import { INSTAGRAM_POST_LIMITS } from '../../constants/fieldLimits';
 import { LimitedField } from '../components/admin/LimitedField';
@@ -66,16 +66,40 @@ export function InstagramAdmin() {
 
   useRealtimeUpdates(['instagram:changed'], load);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const openCreate = () => {
     setEditingId(null);
     setForm({ ...EMPTY_FORM });
+    setErrors({});
     setShowModal(true);
   };
 
   const openEdit = (p: InstagramPost) => {
     setEditingId(p._id);
     setForm({ image: p.image, caption: p.caption || '', link: p.link || '', likes: p.likes, comments: p.comments, order: p.order, isActive: p.isActive });
+    setErrors({});
     setShowModal(true);
+  };
+
+  const handleFieldChange = (key: string, value: any) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) {
+      setErrors((prev) => ({ ...prev, [key]: undefined }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.image.trim()) newErrors.image = 'This field is required';
+    if (form.link.trim() && !/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/.*)?$/i.test(form.link.trim())) {
+      newErrors.link = 'Please enter a valid URL (e.g. https://instagram.com/p/...)';
+    }
+    if (form.likes < 0) newErrors.likes = 'Likes cannot be negative';
+    if (form.comments < 0) newErrors.comments = 'Comments cannot be negative';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const confirmDelete = async () => {
@@ -104,8 +128,8 @@ export function InstagramAdmin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.image.trim()) {
-      toast.error('Please provide an image URL');
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields highlighted in red');
       return;
     }
 
@@ -182,29 +206,74 @@ export function InstagramAdmin() {
             animate={{ opacity: 1, y: 0 }}
             onClick={(e) => e.stopPropagation()}
             onSubmit={handleSubmit}
+            noValidate
             style={{ background: '#FFFDF8', borderRadius: '14px', padding: '28px', width: 'min(460px, 92vw)', maxHeight: '88vh', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}
           >
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '20px' }}>{editingId ? 'Edit post' : 'Add post'}</div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Photo</label>
-              <ImageUploadField value={form.image} onChange={(url) => setForm({ ...form, image: url })} previewHeight={140} />
+              <ImageUploadField value={form.image} onChange={(url) => handleFieldChange('image', url)} previewHeight={140} error={errors.image} />
             </div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Caption (optional, not shown on site yet)</label>
-              <LimitedField value={form.caption} onChange={(value) => setForm({ ...form, caption: value })} maxLength={INSTAGRAM_POST_LIMITS.caption} multiline />
+              <LimitedField value={form.caption} onChange={(value) => handleFieldChange('caption', value)} maxLength={INSTAGRAM_POST_LIMITS.caption} multiline />
             </div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Link to Instagram post (optional)</label>
-              <input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} placeholder="https://instagram.com/p/..." style={inputStyle} />
+              <input
+                value={form.link}
+                onChange={(e) => handleFieldChange('link', e.target.value)}
+                placeholder="https://instagram.com/p/..."
+                style={{
+                  ...inputStyle,
+                  border: errors.link ? '1.5px solid #EF4444' : '1.8px solid rgba(44,24,16,.2)',
+                  background: errors.link ? 'rgba(239,68,68,.05)' : 'rgba(245,239,224,.07)',
+                }}
+              />
+              {errors.link && (
+                <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px", fontWeight: 500 }}>
+                  {errors.link}
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', gap: '12px' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Likes</label>
-                <input type="number" min="0" value={form.likes} onChange={(e) => setForm({ ...form, likes: Number(e.target.value) })} style={inputStyle} />
+                <input
+                  type="number"
+                  min="0"
+                  value={form.likes}
+                  onChange={(e) => handleFieldChange('likes', Number(e.target.value))}
+                  style={{
+                    ...inputStyle,
+                    border: errors.likes ? '1.5px solid #EF4444' : '1.8px solid rgba(44,24,16,.2)',
+                    background: errors.likes ? 'rgba(239,68,68,.05)' : 'rgba(245,239,224,.07)',
+                  }}
+                />
+                {errors.likes && (
+                  <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px", fontWeight: 500 }}>
+                    {errors.likes}
+                  </div>
+                )}
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Comments</label>
-                <input type="number" min="0" value={form.comments} onChange={(e) => setForm({ ...form, comments: Number(e.target.value) })} style={inputStyle} />
+                <input
+                  type="number"
+                  min="0"
+                  value={form.comments}
+                  onChange={(e) => handleFieldChange('comments', Number(e.target.value))}
+                  style={{
+                    ...inputStyle,
+                    border: errors.comments ? '1.5px solid #EF4444' : '1.8px solid rgba(44,24,16,.2)',
+                    background: errors.comments ? 'rgba(239,68,68,.05)' : 'rgba(245,239,224,.07)',
+                  }}
+                />
+                {errors.comments && (
+                  <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px", fontWeight: 500 }}>
+                    {errors.comments}
+                  </div>
+                )}
               </div>
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>

@@ -28,3 +28,14 @@ export const LOCATION_LIMITS = { name: 40, address: 100, hours: 60, email: 100, 
 // Matches backend/src/routes/uploadRoutes.js multer config
 export const MAX_IMAGE_SIZE_MB = 10;
 export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+export const MAX_VIDEO_SIZE_MB = 100;
+export const ALLOWED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'video/ogg',
+  'video/x-msvideo',
+  'video/3gpp',
+  'video/x-matroska',
+];

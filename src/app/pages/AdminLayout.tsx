@@ -21,7 +21,14 @@ export function AdminLayout() {
 
   useEffect(() => {
     const userData = localStorage.getItem("adminUser");
-    if (userData) setUser(JSON.parse(userData));
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch {
+        // Corrupted/partial user object — drop it rather than crash the layout
+        localStorage.removeItem("adminUser");
+      }
+    }
     fetchStats();
   }, []);
 

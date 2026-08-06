@@ -82,7 +82,6 @@ export function Footer({ onNavigate, previewOverride }: FooterProps) {
                 { label: "Home", page: "home" },
                 { label: "Our Story", page: "about" },
                 { label: "Order Now", page: "products" },
-                { label: "View Cart", page: "cart" },
                 { label: "Contact Us", page: "contact" },
               ].map((item) => (
                 <button

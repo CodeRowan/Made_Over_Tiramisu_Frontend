@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { toast } from '../components/ui/CommonToaster';
 import { activityLogAPI } from '../../services/api';
 import { SkeletonBlock, SkeletonRow } from '../components/admin/Skeleton';
 import { useRealtimeUpdates } from '../../hooks/useAdminSocket';

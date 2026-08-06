@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useOutletContext } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '../components/ui/CommonToaster';
 import { testimonialsAPI } from '../../services/api';
 import { TESTIMONIAL_LIMITS } from '../../constants/fieldLimits';
 import { LimitedField } from '../components/admin/LimitedField';
@@ -64,16 +64,40 @@ export function TestimonialsAdmin() {
 
   useRealtimeUpdates(['testimonials:changed'], load);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const openCreate = () => {
     setEditingId(null);
     setForm({ ...EMPTY_FORM });
+    setErrors({});
     setShowModal(true);
   };
 
   const openEdit = (t: Testimonial) => {
     setEditingId(t._id);
     setForm({ name: t.name, location: t.location || '', text: t.text, rating: t.rating, order: t.order, isActive: t.isActive });
+    setErrors({});
     setShowModal(true);
+  };
+
+  const handleFieldChange = (key: string, value: any) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) {
+      setErrors((prev) => ({ ...prev, [key]: undefined }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.name.trim()) newErrors.name = 'This field is required';
+    if (!form.text.trim()) {
+      newErrors.text = 'This field is required';
+    } else if (form.text.trim().length < 5) {
+      newErrors.text = 'Review text must be at least 5 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const confirmDelete = async () => {
@@ -102,8 +126,8 @@ export function TestimonialsAdmin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.text.trim()) {
-      toast.error('Please fill in name and review text');
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields highlighted in red');
       return;
     }
 
@@ -185,20 +209,21 @@ export function TestimonialsAdmin() {
             animate={{ opacity: 1, y: 0 }}
             onClick={(e) => e.stopPropagation()}
             onSubmit={handleSubmit}
+            noValidate
             style={{ background: '#FFFDF8', borderRadius: '14px', padding: '28px', width: 'min(460px, 92vw)', maxHeight: '88vh', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}
           >
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '20px' }}>{editingId ? 'Edit review' : 'Add review'}</div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Customer name</label>
-              <LimitedField value={form.name} onChange={(value) => setForm({ ...form, name: value })} maxLength={TESTIMONIAL_LIMITS.name} />
+              <LimitedField value={form.name} onChange={(value) => handleFieldChange('name', value)} maxLength={TESTIMONIAL_LIMITS.name} error={errors.name} />
             </div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Location</label>
-              <LimitedField value={form.location} onChange={(value) => setForm({ ...form, location: value })} maxLength={TESTIMONIAL_LIMITS.location} placeholder="Gold Coast, QLD" />
+              <LimitedField value={form.location} onChange={(value) => handleFieldChange('location', value)} maxLength={TESTIMONIAL_LIMITS.location} placeholder="Gold Coast, QLD" />
             </div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Review text</label>
-              <LimitedField value={form.text} onChange={(value) => setForm({ ...form, text: value })} maxLength={TESTIMONIAL_LIMITS.text} multiline />
+              <LimitedField value={form.text} onChange={(value) => handleFieldChange('text', value)} maxLength={TESTIMONIAL_LIMITS.text} multiline error={errors.text} />
             </div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Rating</label>

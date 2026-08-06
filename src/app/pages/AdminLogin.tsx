@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../services/api';
-import { toast } from 'sonner';
+import { toast } from '../components/ui/CommonToaster';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
 export function AdminLogin() {
@@ -11,23 +11,57 @@ export function AdminLogin() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
+
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+
+    if (!email.trim()) {
+      newErrors.email = 'This field is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!password) {
+      newErrors.password = 'This field is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.authError('Authentication Required', 'Please fix the errors below before submitting.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await apiClient.post('/auth/login', { email, password });
+      const response = await apiClient.post('/auth/login', { email: email.trim(), password });
 
-      if (response.data.success) {
+      if (response.data?.success) {
         localStorage.setItem('adminToken', response.data.token);
         localStorage.setItem('adminUser', JSON.stringify(response.data.user));
-        toast.success('Login successful!');
+        toast.success('Welcome Back!', 'Authentication successful. Redirecting...');
         navigate('/admin/dashboard');
+      } else {
+        toast.authError('Authentication Failed', response.data?.message || 'Invalid email or password.');
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Login failed');
+      const errorMessage =
+        error.response?.data?.message ||
+        (error.response?.status === 401
+          ? 'Invalid email or password. Please verify your credentials.'
+          : error.message === 'Network Error'
+          ? 'Unable to reach authentication server. Please check your connection.'
+          : 'Authentication failed. Please check your credentials and try again.');
+
+      toast.authError('Authentication Failed', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -54,56 +88,67 @@ export function AdminLogin() {
             Sign in to look after the website — words, photos, videos and the menu.
           </p>
 
-          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "16px", maxWidth: "380px", marginTop: "26px" }}>
+          <form onSubmit={handleLogin} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px", maxWidth: "380px", marginTop: "26px" }}>
             {/* Email */}
             <div>
-              <div style={{ fontSize: "12px", letterSpacing: ".1em", textTransform: "uppercase", color: "#8B6B4A", marginBottom: "8px" }}>
+              <div style={{ fontSize: "12px", letterSpacing: ".1em", textTransform: "uppercase", color: errors.email ? "#EF4444" : "#8B6B4A", marginBottom: "8px" }}>
                 Email
               </div>
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+                }}
                 style={{
                   width: "100%",
                   height: "54px",
                   padding: "0 16px",
                   font: "inherit",
                   fontSize: "15px",
-                  background: "rgba(245,239,224,.07)",
-                  border: "1px solid rgba(245,239,224,.22)",
+                  background: errors.email ? "rgba(239, 68, 68, 0.08)" : "rgba(245,239,224,.07)",
+                  border: errors.email ? "1.5px solid #EF4444" : "1px solid rgba(245,239,224,.22)",
                   color: "#F5EFE0",
                   borderRadius: "10px",
                   boxSizing: "border-box",
+                  outline: "none",
                 }}
-                required
               />
+              {errors.email && (
+                <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "6px", fontWeight: 500 }}>
+                  {errors.email}
+                </div>
+              )}
             </div>
 
             {/* Password */}
             <div>
-              <div style={{ fontSize: "12px", letterSpacing: ".1em", textTransform: "uppercase", color: "#8B6B4A", marginBottom: "8px" }}>
+              <div style={{ fontSize: "12px", letterSpacing: ".1em", textTransform: "uppercase", color: errors.password ? "#EF4444" : "#8B6B4A", marginBottom: "8px" }}>
                 Password
               </div>
               <div style={{ position: "relative" }}>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+                  }}
                   style={{
                     width: "100%",
                     height: "54px",
                     padding: "0 16px",
                     font: "inherit",
                     fontSize: "15px",
-                    background: "rgba(245,239,224,.07)",
-                    border: "1px solid rgba(245,239,224,.22)",
+                    background: errors.password ? "rgba(239, 68, 68, 0.08)" : "rgba(245,239,224,.07)",
+                    border: errors.password ? "1.5px solid #EF4444" : "1px solid rgba(245,239,224,.22)",
                     color: "#F5EFE0",
                     borderRadius: "10px",
                     boxSizing: "border-box",
                     paddingRight: "40px",
+                    outline: "none",
                   }}
-                  required
                 />
                 <button
                   type="button"
@@ -123,6 +168,11 @@ export function AdminLogin() {
                   {showPassword ? "👁‍🗨" : "👁"}
                 </button>
               </div>
+              {errors.password && (
+                <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "6px", fontWeight: 500 }}>
+                  {errors.password}
+                </div>
+              )}
             </div>
 
             {/* Sign In Button */}
