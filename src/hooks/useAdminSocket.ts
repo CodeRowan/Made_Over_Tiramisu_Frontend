@@ -3,7 +3,7 @@ import { io, Socket } from "socket.io-client";
 
 // Backend base URL without the trailing "/api" — Socket.IO connects at the
 // server root, not under the REST API path.
-const SOCKET_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/api\/?$/, "");
+const SOCKET_URL = (import.meta.env.VITE_API_URL || "https://made-over-tiramisu-backend.vercel.app/api").replace(/\/api\/?$/, "");
 
 // One shared connection for the whole admin session — every page that
 // subscribes reuses it instead of opening a new socket per tab/page.
