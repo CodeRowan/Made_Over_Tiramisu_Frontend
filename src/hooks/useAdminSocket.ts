@@ -6,7 +6,7 @@ import { authStorage } from "../services/authStorage";
 // server root, not under the REST API path. Default port matches the API
 // client (5001) so realtime events actually connect in local dev.
 const SOCKET_URL = (import.meta.env.VITE_API_URL //|| "http://localhost:5001/api").replace(/\/api\/?$/, "")
-|| "https://made-over-tiramisu-backend-eg3cvsikn.vercel.app/api").replace(/\/api\/?$/, "")
+|| "https://made-over-tiramisu-backend.vercel.app/api").replace(/\/api\/?$/, "")
 
 // One shared connection for the whole admin session — every page that
 // subscribes reuses it instead of opening a new socket per tab/page.
