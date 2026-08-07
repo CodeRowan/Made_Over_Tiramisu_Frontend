@@ -28,6 +28,7 @@ import { InstagramAdmin } from "./pages/InstagramAdmin";
 import { LocationsAdmin } from "./pages/LocationsAdmin";
 import { MessagesAdmin } from "./pages/MessagesAdmin";
 import { PreviewFrame } from "./pages/PreviewFrame";
+import { MarqueeTicker } from "./components/ui/MarqueeTicker";
 
 /* MARKER-MAKE-KIT-INVOKED */
 
@@ -45,6 +46,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   return (
     <div>
       <HeroSection onNavigate={onNavigate} />
+      <MarqueeTicker /> 
       <StorySection />
       <VideoSection />
       <div id="products-anchor">
