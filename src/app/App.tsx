@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { CommonToaster, toast } from "./components/ui/CommonToaster";
+import { authStorage } from "../services/authStorage";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
@@ -67,7 +68,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
 const BYPASS_AUTH = false; // Set to true to skip login during local development
 
 function ProtectedAdminRoute({ children }: { children: JSX.Element }) {
-  const [authed] = useState(() => (BYPASS_AUTH ? true : !!localStorage.getItem("adminToken")));
+  const [authed] = useState(() => (BYPASS_AUTH ? true : !!authStorage.getToken()));
 
   // Fire the access-denied toast as a side effect, never during render.
   useEffect(() => {

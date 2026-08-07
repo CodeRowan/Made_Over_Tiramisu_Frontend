@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productsAPI, contactAPI, activityLogAPI } from '../../services/api';
+import { authStorage } from '../../services/authStorage';
 import { SkeletonBlock } from '../components/admin/Skeleton';
 import { useRealtimeUpdates } from '../../hooks/useAdminSocket';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -53,15 +54,8 @@ export function AdminDashboard() {
   };
 
   useEffect(() => {
-    const userData = localStorage.getItem('adminUser');
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch {
-        // Corrupted/partial user object — drop it rather than crash the dashboard
-        localStorage.removeItem('adminUser');
-      }
-    }
+    // authStorage.getUser() already guards against a corrupt stored profile
+    setUser(authStorage.getUser());
     loadDashboard();
   }, []);
 

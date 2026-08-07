@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../services/api';
+import { authStorage } from '../../services/authStorage';
 import { toast } from '../components/ui/CommonToaster';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
@@ -45,8 +46,8 @@ export function AdminLogin() {
       const response = await apiClient.post('/auth/login', { email: email.trim(), password });
 
       if (response.data?.success) {
-        localStorage.setItem('adminToken', response.data.token);
-        localStorage.setItem('adminUser', JSON.stringify(response.data.user));
+        authStorage.setToken(response.data.token);
+        authStorage.setUser(response.data.user);
         toast.success('Welcome Back!', 'Authentication successful. Redirecting...');
         navigate('/admin/dashboard');
       } else {

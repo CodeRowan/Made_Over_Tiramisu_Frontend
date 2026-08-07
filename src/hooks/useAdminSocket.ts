@@ -1,10 +1,12 @@
 import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
+import { authStorage } from "../services/authStorage";
 
 // Backend base URL without the trailing "/api" — Socket.IO connects at the
 // server root, not under the REST API path. Default port matches the API
 // client (5001) so realtime events actually connect in local dev.
-const SOCKET_URL = (import.meta.env.VITE_API_URL || "http://localhost:5001/api").replace(/\/api\/?$/, "");
+const SOCKET_URL = (import.meta.env.VITE_API_URL //|| "http://localhost:5001/api").replace(/\/api\/?$/, "")
+|| "https://made-over-tiramisu-backend.vercel.app/api").replace(/\/api\/?$/, "")
 
 // One shared connection for the whole admin session — every page that
 // subscribes reuses it instead of opening a new socket per tab/page.
@@ -12,9 +14,27 @@ let sharedSocket: Socket | null = null;
 
 function getAdminSocket(): Socket {
   if (!sharedSocket) {
-    sharedSocket = io(SOCKET_URL, { transports: ["websocket", "polling"] });
+    // Authenticate the connection with the admin JWT so the backend can
+    // reject anonymous socket connections (handshake auth, ignored by
+    // backends that don't check it).
+    sharedSocket = io(SOCKET_URL, {
+      transports: ["websocket", "polling"],
+      auth: { token: authStorage.getToken() },
+    });
   }
   return sharedSocket;
+}
+
+/**
+ * Closes and forgets the shared admin socket. Call on logout so a
+ * logged-out browser stops receiving admin change events immediately,
+ * instead of the socket lingering until the tab closes.
+ */
+export function disconnectAdminSocket() {
+  if (sharedSocket) {
+    sharedSocket.disconnect();
+    sharedSocket = null;
+  }
 }
 
 /**

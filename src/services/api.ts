@@ -8,6 +8,8 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { toast } from '../app/components/ui/CommonToaster';
+import { authStorage } from './authStorage';
+import { disconnectAdminSocket } from '../hooks/useAdminSocket';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -25,7 +27,7 @@ export const apiClient: AxiosInstance = axios.create({
  */
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('adminToken');
+    const token = authStorage.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -44,8 +46,9 @@ apiClient.interceptors.response.use(
     // If unauthorized, notify user and redirect to login
     if (error.response?.status === 401) {
       const isLoginPage = window.location.pathname.includes('/admin/login');
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUser');
+      authStorage.clear();
+      // An expired session shouldn't keep an authenticated realtime socket alive.
+      disconnectAdminSocket();
       
       if (!isLoginPage) {
         toast.authError('Session Expired', 'Your session has expired. Please log in again.');

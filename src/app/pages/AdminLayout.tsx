@@ -3,7 +3,8 @@ import { motion } from "motion/react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { productsAPI, contactAPI, testimonialsAPI, instagramAPI, locationsAPI } from "../../services/api";
-import { useRealtimeUpdates } from "../../hooks/useAdminSocket";
+import { authStorage } from "../../services/authStorage";
+import { useRealtimeUpdates, disconnectAdminSocket } from "../../hooks/useAdminSocket";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
 export function AdminLayout() {
@@ -20,15 +21,8 @@ export function AdminLayout() {
   const [stats, setStats] = useState({ products: 0, messages: 0, testimonials: 0, instagram: 0, locations: 0 });
 
   useEffect(() => {
-    const userData = localStorage.getItem("adminUser");
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch {
-        // Corrupted/partial user object — drop it rather than crash the layout
-        localStorage.removeItem("adminUser");
-      }
-    }
+    // authStorage.getUser() already guards against a corrupt stored profile
+    setUser(authStorage.getUser());
     fetchStats();
   }, []);
 
@@ -79,8 +73,10 @@ export function AdminLayout() {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminUser");
+    authStorage.clear();
+    // Tear down the shared realtime socket so a logged-out browser no
+    // longer receives admin change events.
+    disconnectAdminSocket();
     navigate("/admin/login");
   };
 

@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authStorage } from '../services/authStorage';
 
 interface User {
   id: string;
@@ -22,25 +23,21 @@ export function useAuth() {
 
   useEffect(() => {
     // Check if user is logged in
-    const token = localStorage.getItem('adminToken');
-    const userStr = localStorage.getItem('adminUser');
+    const token = authStorage.getToken();
+    const user = authStorage.getUser<User>();
 
-    if (token && userStr) {
-      try {
-        const parsedUser = JSON.parse(userStr);
-        setUser(parsedUser);
-      } catch (error) {
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminUser');
-      }
+    if (token && user) {
+      setUser(user);
+    } else if (token && !user) {
+      // Token present but the stored profile is missing/corrupt — drop both
+      authStorage.clear();
     }
 
     setLoading(false);
   }, []);
 
   const logout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminUser');
+    authStorage.clear();
     setUser(null);
     navigate('/admin/login');
   };

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from '../components/ui/CommonToaster';
 import { authAPI } from '../../services/api';
+import { authStorage } from '../../services/authStorage';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface User {
@@ -25,13 +26,9 @@ export function SettingsAdmin() {
   }, []);
 
   const loadUserInfo = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const userData = localStorage.getItem('adminUser');
-      if (userData) setUser(JSON.parse(userData));
-    } catch (error) {
-      toast.error('Failed to load user info');
-    }
+    // authStorage.getUser() already guards against a corrupt stored profile
+    const userData = authStorage.getUser<User>();
+    if (userData) setUser(userData);
   };
 
   const [errors, setErrors] = useState<{ currentPassword?: string; newPassword?: string; confirmPassword?: string }>({});

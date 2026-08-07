@@ -51,9 +51,9 @@ const SECTION_FIELDS: Record<string, { key: string; label: string }[]> = {
   video: [
     { key: 'title', label: 'Title' },
     { key: 'description', label: 'Description' },
-    { key: 'videoUrl', label: 'Uploaded Video File (Cloudinary video)' },
+    { key: 'videoUrl', label: 'Uploaded Video File' },
     // { key: 'videoId', label: 'YouTube Video ID (Optional fallback)' },
-    { key: 'image', label: 'Thumbnail Image URL (Auto-generated or custom)' },
+    { key: 'image', label: 'Thumbnail Image URL ' },
   ],
   testimonials: [
     { key: 'title', label: 'Heading' },
@@ -110,9 +110,25 @@ const DEVICE_SIZES = {
   desktop: { width: 1440, height: 900 },
 };
 
+// Remember which section the admin was editing so a page refresh (or an
+// accidental reload) lands them back where they were instead of resetting
+// to the Hero banner. sessionStorage survives refresh but not a fresh tab,
+// so a new editing session still starts on Hero.
+const SECTION_STORAGE_KEY = 'mot:content:lastSection';
+
+const getInitialSection = () => {
+  try {
+    const saved = sessionStorage.getItem(SECTION_STORAGE_KEY);
+    if (saved && SECTIONS.some((s) => s.id === saved)) return saved;
+  } catch {
+    // storage unavailable (private mode etc.) — fall through to default
+  }
+  return 'hero';
+};
+
 export function ContentAdmin() {
   const isMobile = useIsMobile();
-  const [selectedSection, setSelectedSection] = useState('hero');
+  const [selectedSection, setSelectedSection] = useState(getInitialSection);
   const [content, setContent] = useState<ContentData>({});
   const [originalContent, setOriginalContent] = useState<ContentData>({});
   const [showConfirm, setShowConfirm] = useState(false);
@@ -130,6 +146,16 @@ export function ContentAdmin() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Select a section AND remember it for the next refresh.
+  const handleSectionSelect = (sectionId: string) => {
+    setSelectedSection(sectionId);
+    try {
+      sessionStorage.setItem(SECTION_STORAGE_KEY, sectionId);
+    } catch {
+      // storage unavailable — selection still works for this session
+    }
+  };
 
   useEffect(() => {
     loadContent(selectedSection);
@@ -313,7 +339,7 @@ export function ContentAdmin() {
           {SECTIONS.map((section) => (
             <button
               key={section.id}
-              onClick={() => setSelectedSection(section.id)}
+              onClick={() => handleSectionSelect(section.id)}
               style={{
                 flex: "none",
                 whiteSpace: "nowrap",
@@ -336,7 +362,7 @@ export function ContentAdmin() {
           {SECTIONS.map((section) => (
             <button
               key={section.id}
-              onClick={() => setSelectedSection(section.id)}
+              onClick={() => handleSectionSelect(section.id)}
               style={{
                 width: "100%",
                 padding: "12px 20px",

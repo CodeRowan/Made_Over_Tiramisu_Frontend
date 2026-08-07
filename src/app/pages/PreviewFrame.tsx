@@ -27,6 +27,9 @@ export function PreviewFrame() {
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
+      // Only trust messages from our own origin — a third-party page could
+      // otherwise inject fake draft content into a frame of our preview URL.
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type !== "MOT_PREVIEW_CONTENT") return;
       if (event.data.section !== section) return;
       setOverride(event.data.content || null);

@@ -104,7 +104,7 @@ export function VideoUploadField({ value, onChange, error }: VideoUploadFieldPro
         />
       </div>
       <div style={{ fontSize: "11px", color: error ? "#EF4444" : "#9d8371", marginTop: "5px", fontWeight: error ? 600 : 400 }}>
-        {error ? error : `MP4, WebM, MOV, OGG · up to ${MAX_VIDEO_SIZE_MB}MB (Saved to Cloudinary)`}
+        {error ? error : `MP4, WebM, MOV, OGG · up to ${MAX_VIDEO_SIZE_MB}MB`}
       </div>
     </div>
   );
