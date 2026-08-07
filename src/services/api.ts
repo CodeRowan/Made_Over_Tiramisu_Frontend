@@ -11,7 +11,7 @@ import { toast } from '../app/components/ui/CommonToaster';
 import { authStorage } from './authStorage';
 import { disconnectAdminSocket } from '../hooks/useAdminSocket';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://made-over-tiramisu-backend.vercel.app/api';
 
 // Create axios instance
 export const apiClient: AxiosInstance = axios.create({
