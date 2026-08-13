@@ -5,6 +5,7 @@ import { apiClient } from '../../services/api';
 import { authStorage } from '../../services/authStorage';
 import { toast } from '../components/ui/CommonToaster';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import loginImage from '../../imports/WhatsApp Image 2026-08-06 at 6.52.02 AM.jpeg';
 
 export function AdminLogin() {
   const isMobile = useIsMobile();
@@ -208,24 +209,19 @@ export function AdminLogin() {
           </form>
         </div>
 
-        {/* Right: Image Placeholder — decorative only, dropped on mobile to keep the form front and center */}
+        {/* Right: Image — decorative only, dropped on mobile to keep the form front and center */}
         {!isMobile && (
           <div style={{ position: "relative", padding: "26px", display: "flex", alignItems: "center", justifyContent: "center", background: "#EDE5D8" }}>
-            <div style={{
-              width: "100%",
-              height: "100%",
-              background: "linear-gradient(135deg, #C9A87C 0%, #8B5E3C 100%)",
-              borderRadius: "10px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#F5EFE0",
-              fontSize: "14px",
-              textAlign: "center",
-              padding: "20px",
-            }}>
-              <span>Drop a tiramisu photo here</span>
-            </div>
+            <img
+              src={loginImage}
+              alt="Making tiramisu"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                borderRadius: "10px",
+              }}
+            />
           </div>
         )}
       </div>
