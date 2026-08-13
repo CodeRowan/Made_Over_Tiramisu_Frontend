@@ -30,9 +30,9 @@ export function Header({ onNavigate, currentPage, previewOverride }: HeaderProps
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
       style={{
-        background: dark ? "rgba(44,24,16,0.97)" : "transparent",
-        backdropFilter: dark ? "blur(12px)" : "none",
-        borderBottom: dark ? "1px solid rgba(201,168,124,0.2)" : "none",
+        background: dark || menuOpen ? "#2C1810" : "transparent",
+        backdropFilter: dark || menuOpen ? "blur(12px)" : "none",
+        borderBottom: dark || menuOpen ? "1px solid rgba(201,168,124,0.2)" : "none",
       }}
     >
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -110,7 +110,7 @@ export function Header({ onNavigate, currentPage, previewOverride }: HeaderProps
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           className="md:hidden px-6 pb-4 flex flex-col gap-4"
-          style={{ background: "rgba(44,24,16,0.98)" }}
+          style={{ background: "#2C1810" }}
         >
           {["home", "about", "contact"].map((p) => (
             <button

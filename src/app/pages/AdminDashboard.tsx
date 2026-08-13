@@ -78,7 +78,7 @@ export function AdminDashboard() {
           { label: 'Unread', value: stats.unread, sub: 'Need attention' },
           { label: 'Changes', value: stats.changesLast7Days, sub: 'Last 7 days' },
         ].map((card) => (
-          <div key={card.label} style={{ background: "#FFFDF8", borderRadius: "16px", padding: isMobile ? "16px" : "24px", transition: "transform .2s ease", cursor: "pointer" }} onMouseOver={e => (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)"} onMouseOut={e => (e.currentTarget as HTMLElement).style.transform = "none"}>
+          <div key={card.label} style={{ background: "#FFFDF8", borderRadius: "16px", padding: isMobile ? "16px" : "24px" }}>
             <div style={{ fontSize: "12px", color: "#7a5c48" }}>{card.label}</div>
             {pageLoading ? (
               <div style={{ margin: "10px 0 6px" }}><SkeletonBlock width={60} height={36} /></div>
