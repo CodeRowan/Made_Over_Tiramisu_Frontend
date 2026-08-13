@@ -192,6 +192,9 @@ export const uploadAPI = {
         'Content-Type': 'multipart/form-data',
       },
     }),
+  getVideoUploadConfig: () => apiClient.get('/upload/video-config'),
+  logVideoUpload: (data: { videoUrl: string; publicId: string; fileName: string; size: number }) =>
+    apiClient.post('/upload/log', data),
 };
 
 export default apiClient;
