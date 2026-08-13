@@ -13,7 +13,7 @@ export interface CommonToasterProps {
  */
 export function CommonToaster({
   position = "top-right",
-  theme = "dark"
+  theme = "light"
 }: CommonToasterProps) {
   return (
     <Sonner
@@ -26,12 +26,12 @@ export function CommonToaster({
       className="made-over-tiramisu-toaster"
       toastOptions={{
         style: {
-          background: "#1A0D06",
-          color: "#F5EFE0",
-          border: "1px solid rgba(201, 168, 124, 0.25)",
+          background: "#FFFDF8",
+          color: "#2C1810",
+          border: "1px solid rgba(44, 24, 16, 0.12)",
           borderRadius: "12px",
           padding: "14px 16px",
-          boxShadow: "0 20px 30px -10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(192, 99, 58, 0.15)",
+          boxShadow: "0 10px 25px rgba(44, 24, 16, 0.15), 0 2px 6px rgba(44, 24, 16, 0.08)",
           fontFamily: "'Lato', sans-serif",
           fontSize: "14px",
         },
@@ -58,9 +58,9 @@ export const toast = {
       description,
       icon: <CheckCircle2 style={{ color: "#22c55e", width: "20px", height: "20px", flexShrink: 0 }} />,
       style: {
-        background: "#121A13",
+        background: "#F0FBF2",
         border: "1px solid rgba(34, 197, 94, 0.3)",
-        color: "#F5EFE0",
+        color: "#2C1810",
       },
       ...options,
     });
@@ -75,11 +75,11 @@ export const toast = {
 
     return sonnerToast.error(message, {
       description: desc,
-      icon: <AlertCircle style={{ color: "#EF4444", width: "20px", height: "20px", flexShrink: 0 }} />,
+      icon: <AlertCircle style={{ color: "#d4183d", width: "20px", height: "20px", flexShrink: 0 }} />,
       style: {
-        background: "#1F1011",
-        border: "1px solid rgba(239, 68, 68, 0.35)",
-        color: "#F5EFE0",
+        background: "#FDF0F1",
+        border: "1px solid rgba(212, 24, 61, 0.3)",
+        color: "#2C1810",
       },
       ...opts,
     });
@@ -97,13 +97,13 @@ export const toast = {
             display: "flex",
             alignItems: "flex-start",
             gap: "12px",
-            background: "linear-gradient(135deg, #2A0F12 0%, #1A0D06 100%)",
-            border: "1.5px solid #DC2626",
+            background: "#FDF0F1",
+            border: "1.5px solid #d4183d",
             borderRadius: "12px",
             padding: "14px 16px",
-            color: "#F5EFE0",
+            color: "#2C1810",
             width: "100%",
-            boxShadow: "0 10px 25px rgba(220, 38, 38, 0.25), 0 0 15px rgba(220, 38, 38, 0.15)",
+            boxShadow: "0 10px 25px rgba(44, 24, 16, 0.15), 0 2px 6px rgba(44, 24, 16, 0.08)",
             position: "relative",
             overflow: "hidden",
           }}
@@ -116,19 +116,19 @@ export const toast = {
               left: 0,
               bottom: 0,
               width: "4px",
-              background: "#EF4444",
+              background: "#d4183d",
             }}
           />
 
           <div
             style={{
-              background: "rgba(239, 68, 68, 0.15)",
+              background: "rgba(212, 24, 61, 0.12)",
               padding: "8px",
               borderRadius: "8px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#F87171",
+              color: "#d4183d",
               flexShrink: 0,
             }}
           >
@@ -140,7 +140,7 @@ export const toast = {
               style={{
                 fontSize: "14px",
                 fontWeight: "700",
-                color: "#FCA5A5",
+                color: "#d4183d",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
@@ -154,11 +154,11 @@ export const toast = {
                   fontSize: "10px",
                   fontWeight: 700,
                   textTransform: "uppercase",
-                  background: "rgba(220, 38, 38, 0.25)",
-                  color: "#FCA5A5",
+                  background: "rgba(212, 24, 61, 0.15)",
+                  color: "#d4183d",
                   padding: "2px 6px",
                   borderRadius: "4px",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  border: "1px solid rgba(212, 24, 61, 0.3)",
                 }}
               >
                 Auth Error
@@ -167,7 +167,7 @@ export const toast = {
             <div
               style={{
                 fontSize: "13px",
-                color: "rgba(245, 239, 224, 0.85)",
+                color: "rgba(44, 24, 16, 0.75)",
                 lineHeight: "1.4",
                 wordBreak: "break-word",
               }}
@@ -181,7 +181,7 @@ export const toast = {
             style={{
               background: "transparent",
               border: "none",
-              color: "rgba(245, 239, 224, 0.5)",
+              color: "rgba(44, 24, 16, 0.5)",
               cursor: "pointer",
               padding: "4px",
               borderRadius: "4px",
@@ -190,8 +190,8 @@ export const toast = {
               justifyContent: "center",
               transition: "color 0.2s",
             }}
-            onMouseOver={(e) => ((e.currentTarget as HTMLElement).style.color = "#F5EFE0")}
-            onMouseOut={(e) => ((e.currentTarget as HTMLElement).style.color = "rgba(245, 239, 224, 0.5)")}
+            onMouseOver={(e) => ((e.currentTarget as HTMLElement).style.color = "#2C1810")}
+            onMouseOut={(e) => ((e.currentTarget as HTMLElement).style.color = "rgba(44, 24, 16, 0.5)")}
             aria-label="Close notification"
           >
             <X size={16} />
@@ -213,9 +213,9 @@ export const toast = {
       description,
       icon: <AlertTriangle style={{ color: "#F59E0B", width: "20px", height: "20px", flexShrink: 0 }} />,
       style: {
-        background: "#1E1A11",
+        background: "#FEF9EC",
         border: "1px solid rgba(245, 158, 11, 0.35)",
-        color: "#F5EFE0",
+        color: "#2C1810",
       },
       ...options,
     });
@@ -229,9 +229,9 @@ export const toast = {
       description,
       icon: <Info style={{ color: "#3B82F6", width: "20px", height: "20px", flexShrink: 0 }} />,
       style: {
-        background: "#111827",
+        background: "#EEF4FD",
         border: "1px solid rgba(59, 130, 246, 0.35)",
-        color: "#F5EFE0",
+        color: "#2C1810",
       },
       ...options,
     });

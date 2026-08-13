@@ -301,7 +301,7 @@ export function ProductsAdmin() {
                   ${product.price || "0"}
                 </div>
               </div>
-              <div style={{ fontSize: "13px", color: "#7a5c48", lineHeight: "1.5", flex: "1" }}>
+              <div style={{ fontSize: "13px", color: "#7a5c48", lineHeight: "1.5", flex: "1", overflowWrap: "break-word", wordBreak: "break-word" }}>
                 {product.description}
               </div>
 
