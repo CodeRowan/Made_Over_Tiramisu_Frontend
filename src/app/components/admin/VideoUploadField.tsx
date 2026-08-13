@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import axios from "axios";
 import { toast } from "../ui/CommonToaster";
 import { uploadAPI } from "../../../services/api";
 import { MAX_VIDEO_SIZE_MB, ALLOWED_VIDEO_TYPES } from "../../../constants/fieldLimits";
@@ -11,11 +12,17 @@ interface VideoUploadFieldProps {
 
 /**
  * Video field for admin forms: paste a video URL directly, or upload a video file
- * from the device — which uploads to Cloudinary via the backend and returns
- * the Cloudinary video URL along with an auto-generated thumbnail URL.
+ * from the device.
+ *
+ * Videos are uploaded DIRECTLY from the browser to Cloudinary using an unsigned
+ * upload preset (created by the backend). Routing the video through the backend
+ * would fail on Vercel, whose serverless functions reject request bodies over
+ * ~4.5MB with "payload too large" — long before the file ever reaches Cloudinary.
+ * Direct upload keeps the original quality and supports files up to 100MB.
  */
 export function VideoUploadField({ value, onChange, error }: VideoUploadFieldProps) {
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,15 +42,53 @@ export function VideoUploadField({ value, onChange, error }: VideoUploadFieldPro
 
     try {
       setUploading(true);
+      setProgress(0);
+
+      // Get the unsigned preset config the backend created for direct uploads
+      const { data: config } = await uploadAPI.getVideoUploadConfig();
+
+      // Upload straight to Cloudinary — the backend never sees the file bytes,
+      // so Vercel's serverless request-body limit doesn't apply.
       const formData = new FormData();
       formData.append("file", file);
-      const response = await uploadAPI.uploadImage(formData);
-      const videoUrl = response.data.videoUrl || response.data.imageUrl;
-      const thumbnailUrl = response.data.thumbnailUrl;
+      formData.append("upload_preset", config.presetName);
+
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${config.cloudName}/video/upload`,
+        formData,
+        {
+          onUploadProgress: (event) => {
+            if (event.total) {
+              setProgress(Math.round((event.loaded / event.total) * 100));
+            }
+          },
+        }
+      );
+
+      const result = response.data;
+      const videoUrl = result.secure_url;
+      // Cloudinary auto-extracts a JPG thumbnail from the video's first frame
+      const thumbnailUrl = `https://res.cloudinary.com/${config.cloudName}/video/upload/${result.public_id}.jpg`;
+
       onChange(videoUrl, thumbnailUrl);
       toast.success("Video uploaded to Cloudinary successfully!");
+
+      // Keep the admin audit trail in sync (the upload itself happens outside
+      // the backend, so log it explicitly). Never fail the UX on a log error.
+      uploadAPI
+        .logVideoUpload({
+          videoUrl,
+          publicId: result.public_id,
+          fileName: file.name,
+          size: file.size,
+        })
+        .catch(() => {});
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Video upload failed");
+      const message =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        "Video upload failed";
+      toast.error(message);
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -93,7 +138,7 @@ export function VideoUploadField({ value, onChange, error }: VideoUploadFieldPro
             whiteSpace: "nowrap",
           }}
         >
-          {uploading ? "Uploading video..." : "Upload video from device"}
+          {uploading ? `Uploading video… ${progress}%` : "Upload video from device"}
         </button>
         <input
           ref={fileInputRef}
