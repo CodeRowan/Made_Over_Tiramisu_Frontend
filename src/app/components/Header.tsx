@@ -122,19 +122,6 @@ export function Header({ onNavigate, currentPage, previewOverride }: HeaderProps
               {p === "home" ? "Home" : p === "about" ? "About Us" : "Contact Us"}
             </button>
           ))}
-          <button
-            onClick={() => { onNavigate("findus"); setMenuOpen(false); }}
-            className="mt-2 px-4 py-2 rounded-lg font-semibold text-sm tracking-widest uppercase text-center"
-            style={{
-              background: "#C0633A",
-              color: "#F5EFE0",
-              fontFamily: "'Lato', sans-serif",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Order Now
-          </button>
         </motion.div>
       )}
     </motion.header>
